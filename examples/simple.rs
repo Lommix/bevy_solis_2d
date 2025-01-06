@@ -1,5 +1,5 @@
 use bevy::{
-    core_pipeline::tonemapping::Tonemapping, diagnostic::FrameTimeDiagnosticsPlugin,
+    diagnostic::FrameTimeDiagnosticsPlugin,
     input::mouse::MouseWheel, prelude::*,
 };
 use bevy_egui::*;
@@ -35,22 +35,20 @@ struct Keep;
 
 fn setup(mut cmd: Commands) {
     cmd.spawn((
-        Camera2dBundle {
-            transform: Transform::from_translation(Vec3::new(0.0, 0.0, 5.0))
-                .looking_at(Vec3::default(), Vec3::Y),
-            camera: Camera {
-                clear_color: Color::BLACK.into(),
-                hdr: true,
-                ..default()
-            },
-            tonemapping: Tonemapping::AcesFitted,
+        Camera2d,
+        Camera {
+            clear_color: Color::BLACK.into(),
+            hdr: true,
             ..default()
         },
+        Transform::from_translation(Vec3::new(0.0, 0.0, 5.0))
+                .looking_at(Vec3::default(), Vec3::Y),
         RadianceConfig::default(),
     ));
 
     cmd.spawn((
-        SpatialBundle::default(),
+        Visibility::default(),
+        Transform::default(),
         Emitter {
             intensity: 1.,
             color: Color::BLACK,
@@ -65,7 +63,8 @@ fn setup(mut cmd: Commands) {
             shape: SdfShape::Circle(200.),
         },
         FollowMouse,
-        SpatialBundle::default(),
+        Visibility::default(),
+        Transform::default(),
     ));
 }
 
@@ -155,11 +154,8 @@ fn spawn_light(
     if inputs.just_pressed(MouseButton::Left) {
         cmd.spawn((
             emitter.clone(),
-            SpriteBundle {
-                texture: server.load("lamp.png"),
-                transform: transform.clone(),
-                ..default()
-            },
+            Sprite::from_image(server.load("lamp.png")),
+            transform.clone(),
         ));
 
         let color = Color::srgb(
@@ -180,11 +176,8 @@ fn spawn_light(
                 color: Color::BLACK,
                 intensity: 1.,
             },
-            SpriteBundle {
-                texture: server.load("lamp.png"),
-                transform: transform.clone(),
-                ..default()
-            },
+            Sprite::from_image(server.load("lamp.png")),
+            transform.clone(),
         ));
     }
 }
@@ -284,26 +277,34 @@ fn move_light(
 }
 
 fn spawn_info_box(mut cmd: Commands) {
-    let mut node = NodeBundle::default();
-    node.style.width = Val::Percent(100.);
-    node.style.height = Val::Percent(100.);
-    node.style.align_items = AlignItems::End;
-    node.style.justify_content = JustifyContent::Start;
+
+    let mut node = Node::DEFAULT;
+    node.width = Val::Percent(100.);
+    node.height = Val::Percent(100.);
+    node.align_items = AlignItems::End;
+    node.justify_content = JustifyContent::Start;
 
     cmd.spawn(node).with_children(|cmd| {
-        let mut node = NodeBundle::default();
-        node.style.border = UiRect::all(Val::Px(4.));
-        node.background_color = BackgroundColor(Color::BLACK);
-        node.border_radius = BorderRadius::all(Val::Px(15.));
-        node.style.padding = UiRect::all(Val::Px(10.));
-        cmd.spawn(node).with_children(|cmd| {
-            cmd.spawn(TextBundle::from_section(
-                "[Arrowkeys]:Move [I]:Zoom-in [O]:Zoom-out [Wheel]:Inc-size [Wheel+shift]:Inc-intensity [R]: clear screen",
-                TextStyle {
-                    color: Color::WHITE,
+
+        let mut node = Node::DEFAULT;
+
+        node.border = UiRect::all(Val::Px(4.));
+        node.padding = UiRect::all(Val::Px(10.));
+
+        cmd.spawn(node)
+        .insert(BackgroundColor(Color::BLACK))
+        .insert(BorderRadius::all(Val::Px(15.)))
+        .with_children(|cmd| {
+
+            cmd.spawn((
+                Text::new(
+                    "[Arrowkeys]:Move [I]:Zoom-in [O]:Zoom-out [Wheel]:Inc-size [Wheel+shift]:Inc-intensity [R]: clear screen"
+                ),
+                TextFont{
                     font_size: 20.,
                     ..default()
                 },
+                TextColor(Color::WHITE),
             ));
         });
     });

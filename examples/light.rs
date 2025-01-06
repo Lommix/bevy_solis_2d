@@ -8,10 +8,10 @@ use bevy::{
         render_resource::{
             Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
         },
-        texture::ImageSampler,
         view::RenderLayers,
     },
     window::WindowResized,
+    image::ImageSampler,
 };
 use bevy_egui::*;
 use solis_2d::prelude::*;
@@ -118,27 +118,23 @@ fn sync_size(
 fn setup(mut cmd: Commands, server: Res<AssetServer>, mut images: ResMut<Assets<Image>>) {
     let image_handle = images.add(create_image(Vec2::new(1024., 1024.)));
     cmd.spawn((
-        Camera2dBundle {
-            transform: Transform::from_translation(Vec3::new(0.0, 0.0, 5.0))
+        Camera2d,
+        Transform::from_translation(Vec3::new(0.0, 0.0, 5.0))
                 .looking_at(Vec3::default(), Vec3::Y),
-            camera: Camera {
-                clear_color: Color::BLACK.into(),
-                hdr: true,
-                ..default()
-            },
-            tonemapping: Tonemapping::AcesFitted,
+        Camera {
+            clear_color: Color::BLACK.into(),
+            hdr: true,
             ..default()
         },
+        Tonemapping::AcesFitted,
         RadianceConfig::default(),
         MainCamera,
         NormalTarget(image_handle.clone()),
     ));
     cmd.spawn((
-        Camera2dBundle {
-            camera: Camera {
-                target: RenderTarget::Image(image_handle),
-                ..default()
-            },
+        Camera2d,
+        Camera {
+            target: RenderTarget::Image(image_handle),
             ..default()
         },
         RenderLayers::layer(3),
@@ -148,11 +144,8 @@ fn setup(mut cmd: Commands, server: Res<AssetServer>, mut images: ResMut<Assets<
         for y in -4..=8 {
             let rand = rand::random::<f32>();
             cmd.spawn((
-                SpriteBundle {
-                    texture: server.load("box.png"),
-                    transform: Transform::from_xyz((x as f32) * 400., (y as f32) * 400., 1.),
-                    ..default()
-                },
+                Sprite::from_image(server.load("box.png")),
+                Transform::from_xyz((x as f32) * 400., (y as f32) * 400., 1.),
                 Emitter {
                     intensity: 0.0,
                     color: Color::BLACK,
@@ -162,11 +155,8 @@ fn setup(mut cmd: Commands, server: Res<AssetServer>, mut images: ResMut<Assets<
             ));
 
             cmd.spawn((
-                SpriteBundle {
-                    texture: server.load("boxn.png"),
-                    transform: Transform::from_xyz((x as f32) * 400., (y as f32) * 400., 1.),
-                    ..default()
-                },
+                Sprite::from_image(server.load("boxn.png")),
+                Transform::from_xyz((x as f32) * 400., (y as f32) * 400., 1.),
                 RenderLayers::layer(3),
                 Spin(rand),
             ));
@@ -179,19 +169,13 @@ fn setup(mut cmd: Commands, server: Res<AssetServer>, mut images: ResMut<Assets<
             let ox = x as f32 * 2048.;
             let oy = y as f32 * 2048.;
 
-            cmd.spawn(SpriteBundle {
-                sprite: Sprite { ..default() },
-                texture: server.load("brick.png"),
-                transform: Transform::from_translation(Vec3::new(ox, oy, 0.)),
-                ..default()
-            });
             cmd.spawn((
-                SpriteBundle {
-                    sprite: Sprite { ..default() },
-                    texture: server.load("brickn.png"),
-                    transform: Transform::from_translation(Vec3::new(ox, oy, 0.)),
-                    ..default()
-                },
+                Sprite::from_image(server.load("brick.png")),
+                Transform::from_translation(Vec3::new(ox, oy, 0.)),
+            ));
+            cmd.spawn((
+                Sprite::from_image(server.load("brickn.png")),
+                Transform::from_translation(Vec3::new(ox, oy, 0.)),
                 RenderLayers::layer(3),
             ));
         }
@@ -204,11 +188,8 @@ fn setup(mut cmd: Commands, server: Res<AssetServer>, mut images: ResMut<Assets<
             shape: SdfShape::Circle(200.),
         },
         FollowMouse,
-        SpriteBundle {
-            texture: server.load("lamp.png"),
-            transform: Transform::from_translation(Vec3::new(0., 0., 0.)),
-            ..default()
-        },
+        Sprite::from_image(server.load("lamp.png")),
+        Transform::from_translation(Vec3::new(0., 0., 0.)),
     ));
 }
 
@@ -324,31 +305,36 @@ fn flag_checkbox(bit: GiFlags, ui: &mut egui::Ui, flags: &mut GiFlags, label: &s
 
 fn update(mut query: Query<(&mut Transform, &Spin)>, time: Res<Time>) {
     query.iter_mut().for_each(|(mut transform, spin)| {
-        transform.rotation = Quat::from_rotation_z(time.elapsed_seconds() * spin.0);
+        transform.rotation = Quat::from_rotation_z(time.delta_secs() * spin.0);
     });
 }
 
 fn spawn_info_box(mut cmd: Commands) {
-    let mut node = NodeBundle::default();
-    node.style.width = Val::Percent(100.);
-    node.style.height = Val::Percent(100.);
-    node.style.align_items = AlignItems::End;
-    node.style.justify_content = JustifyContent::Start;
+    let mut node = Node::DEFAULT;
+    node.width = Val::Percent(100.);
+    node.height = Val::Percent(100.);
+    node.align_items = AlignItems::End;
+    node.justify_content = JustifyContent::Start;
 
     cmd.spawn(node).with_children(|cmd| {
-        let mut node = NodeBundle::default();
-        node.style.border = UiRect::all(Val::Px(4.));
-        node.background_color = BackgroundColor(Color::BLACK);
-        node.border_radius = BorderRadius::all(Val::Px(15.));
-        node.style.padding = UiRect::all(Val::Px(10.));
-        cmd.spawn(node).with_children(|cmd| {
-            cmd.spawn(TextBundle::from_section(
-                "[Arrowkeys]:Move [I]:Zoom-in [O]:Zoom-out [Wheel]:Inc-size [Wheel+shift]:Inc-intensity [R]: clear screen",
-                TextStyle {
-                    color: Color::WHITE,
+
+        let mut node = Node::DEFAULT;
+        node.border = UiRect::all(Val::Px(4.));
+        node.padding = UiRect::all(Val::Px(10.));
+
+        cmd.spawn(node)
+        .insert(BackgroundColor(Color::BLACK))
+        .insert(BorderRadius::all(Val::Px(15.)))
+        .with_children(|cmd| {
+            cmd.spawn((
+                Text::new(
+                    "[Arrowkeys]:Move [I]:Zoom-in [O]:Zoom-out [Wheel]:Inc-size [Wheel+shift]:Inc-intensity [R]: clear screen"
+                ),
+                TextFont{
                     font_size: 20.,
                     ..default()
                 },
+                TextColor(Color::WHITE),
             ));
         });
     });
@@ -372,11 +358,8 @@ fn spawn_light(
     if inputs.just_pressed(MouseButton::Left) {
         cmd.spawn((
             emitter.clone(),
-            SpriteBundle {
-                texture: server.load("lamp.png"),
-                transform: transform.clone(),
-                ..default()
-            },
+            Sprite::from_image(server.load("lamp.png")),
+            transform.clone(),
         ));
 
         let color = Color::srgb(
@@ -395,11 +378,8 @@ fn spawn_light(
                 color: Color::BLACK,
                 intensity: 1.,
             },
-            SpriteBundle {
-                texture: server.load("lamp.png"),
-                transform: transform.clone(),
-                ..default()
-            },
+            Sprite::from_image(server.load("lamp.png")),
+            transform.clone(),
         ));
     }
 }

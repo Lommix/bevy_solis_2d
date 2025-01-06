@@ -62,6 +62,7 @@ impl FromWorld for SdfPipeline {
                             write_mask: ColorWrites::ALL,
                         })],
                     }),
+                    zero_initialize_workgroup_memory: false,
                 });
 
         Self { layout, id }

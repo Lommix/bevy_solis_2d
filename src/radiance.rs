@@ -56,6 +56,7 @@ impl FromWorld for RadiancePipeline {
                     write_mask: ColorWrites::ALL,
                 })],
             }),
+            zero_initialize_workgroup_memory: false,
         });
 
         let composite_id = cache.queue_render_pipeline(RenderPipelineDescriptor {
@@ -76,6 +77,7 @@ impl FromWorld for RadiancePipeline {
                     write_mask: ColorWrites::ALL,
                 })],
             }),
+            zero_initialize_workgroup_memory: false,
         });
 
         let mipmap_id = cache.queue_render_pipeline(RenderPipelineDescriptor {
@@ -96,6 +98,7 @@ impl FromWorld for RadiancePipeline {
                     write_mask: ColorWrites::ALL,
                 })],
             }),
+            zero_initialize_workgroup_memory: false,
         });
 
         let radiance_sampler = render_device.create_sampler(&SamplerDescriptor {
