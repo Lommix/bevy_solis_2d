@@ -17,18 +17,18 @@ opt-level = 1
 opt-level = 3
 
 [dependencies]
-bevy = { version = "0.14", default-features = false, features = [
-  "bevy_sprite",
+bevy = { version = "0.15", default-features = false, features = [
+  "bevy_sprite", "bevy_window",
 ] }
 bitflags = "2.5.0"
 bytemuck = "1.15.0"
 rand = "0.8.5"
 
 [dev-dependencies]
-bevy_egui = "0.28"
-egui_extras = { version = "0.29.1", features = ["all_loaders"] }
+bevy_egui = "0.32"
+egui_extras = { version = "0.30", features = ["all_loaders"] }
 image = "0.25.2"
-bevy = { version = "0.14", default-features = false, features = [
+bevy = { version = "0.15", default-features = false, features = [
   "bevy_sprite",
   "bevy_ui",
   "bevy_asset",
